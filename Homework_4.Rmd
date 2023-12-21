@@ -1,0 +1,169 @@
+---
+title: "HW4-Group I"
+author: "Cusma Fait, Masella, El Gataa"
+date: "2024-1-7"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(MASS)
+
+knitr::opts_chunk$set(echo=TRUE)
+set.seed(0)
+```
+
+
+
+## FSDS - Chapter 4
+
+
+### Ex 4.42
+
+Consider $n$ independent observations from a $N(µ, σ^2)$ distribution.
+(a) Focusing on $\mu$, find the likelihood function. Show that the log-likelihood function is a concave, parabolic function of $\mu$. Find the ML estimator $\hat \mu$.
+(b) Considering $\sigma^2$ to be known, find the information using (i) equation (4.3), (ii) equation (4.4). Use them to show that the large-sample variance of $\hat \mu$ is $\sigma^2/n$. Explain why $\hat \mu$ is the minimum variance unbiased estimator.
+(c) Show that the ML estimator $\hat \sigma$ of $\sigma$ is $\sqrt{\Sigma_i(Y_i - Y)^2}/n$. Show that the large-sample variance of $\hat \sigma$ is $\sigma^2/2n$.
+
+**Solution**
+
+(a)
+
+Likelihood
+$$L(\mu, \sigma^2|y) = \Pi_{i=1}^n \frac{1}{\sqrt{2 \pi \sigma^2}} exp(-\frac{(y_i-\mu)^2}{2 \sigma^2})$$
+log-likelihood
+$$l(\mu, \sigma^2|y) = \Sigma_{i=1}^n log(\frac{1}{\sqrt{2 \pi \sigma^2}} exp(-\frac{(y_i-\mu)^2}{2 \sigma^2}))$$
+$$= -\frac{1}{2}\Sigma_{i=1}^n (log(2 \pi \sigma^2) +  \frac{(y_i-\mu)^2}{ \sigma^2})$$
+
+$$= -\frac{1}{2} (n \space log(2 \pi \sigma^2) +\frac{1}{ \sigma^2} \Sigma_{i=1}^n (y_i-\mu)^2) $$
+We can see that the log-likelihood function is a parabolic function of $\mu$.
+
+We now proceed by calculating the derivatives;
+
+$$\frac{dl}{d\mu} = \frac{1}{\sigma^2} \Sigma_{i=1}^n (y_i-\mu)
+= n \frac{E(y) -\mu}{\sigma^2}$$
+
+By equating the derivative to $0$, we get the ML estimate of the mean 
+$$\hat \mu = E(y)$$
+$$(\frac{d}{d\mu})^2 l =  -\frac{1}{\sigma^2} < 0$$
+Therefore, the log-likelihood function is also concave.
+
+$$\frac{dl}{d(\sigma^2)} = -\frac{1}{2} (\frac{n}{\sigma^2} - \frac{1}{ \sigma^4} \Sigma_{i=1}^n (y_i-\mu)^2) $$
+$$\sigma^2 = Var(y)$$
+
+(b)
+...
+
+(c)
+...
+
+```{r 4_42, echo=TRUE}
+
+```
+
+...
+
+
+
+### Ex 4.62
+
+For the bootstrap method, explain the similarity and difference between the true sampling distribution of $\hat \theta$ and the empirically-generated bootstrap distribution in terms of its center and its spread.
+
+**Solution**
+
+...
+
+```{r 4_62, echo=TRUE}
+
+```
+
+...
+
+
+
+## FSDS - Chapter 8
+
+
+### Ex 8.4
+
+Refer to $Exercise$ $8.1$. Construct a classification tree, and prune strongly until the tree uses a single explanatory variable. Which crabs were predicted to have satellites? How does the proportion of correct predictions compare with the more complex tree in $Figure$  $8.2$?
+
+**Solution**
+
+...
+
+```{r 8_4, echo=TRUE}
+
+```
+
+...
+
+
+
+## LAB
+
+Suppose you receive $n=15$ phone calls in a day, and you want to build a model to assess their average length. Your likelihood for each call length is $y_i∼Exponential(\lambda)$. Now, you have to choose the prior $\pi(\lambda)$. Please, tell which of these priors is adequate to describe the problem, and provide a short motivation for each of them:
+
+$$\pi(\lambda)=Beta(4,2)$$
+
+$$\pi(\lambda)=Normal(1,2)$$
+
+$$\pi(\lambda)=Gamma(4,2)$$
+
+Now, compute your posterior as $\pi(\lambda|y) \space \propto \space L(\lambda;y)\pi(\lambda)$ for the selected prior. If your first choice was correct, you will be able to compute it analytically.
+
+**Solution**
+
+...
+
+```{r LAB, echo=TRUE}
+
+```
+
+...
+
+
+
+## ISLR - chapter 7
+
+
+### exercises 7.9
+
+...
+
+**Solution**
+
+...
+
+```{r 7_9, echo=TRUE}
+
+```
+
+...
+
+
+
+## GAM
+
+This question is about using $gam$ for univariate smoothing, the advantages of penalized regression and weighting a smooth model fit. The $mcycle$ data in the $MASS$ package are a classic dataset in univariate smoothing, introduced in Silverman (1985). The data measure the acceleration of the rider’s head, against time, in a simulated motorcycle crash.
+
+Plot the acceleration against time, and use $gam$ to fit a univariate smooth to the data, selecting the smoothing parameter by GCV (k of 30 to 40 is plenty for this example). Plot the resulting smooth, with partial residuals, but without standard errors.
+
+Use $lm$ and $poly$ to fit a polynomial to the data, with approximately the same degrees of freedom as was estimated by $gam$. Use $termplot$ to plot the estimated polynomial and partial residuals. Note the substantially worse fit achieved by the polynomial, relative to the penalized regression spline fit.
+
+It’s possible to overstate the importance of penalization in explaining the improvement of the penalized regression spline, relative to the polynomial. Use $gam$ to refit an un-penalized thin plate regression spline to the data, with basis dimension the same as that used for the polynomial, and again produce a plot for comparison with the previous two results.
+
+Redo $part$ $3$ using an un-penalized cubic regression spline. You should find a fairly clear ordering of the acceptability of the results for the four models tried - what is it?
+
+Now plot the model residuals against time, and comment.
+
+Fit a linear model including a b-spline using the function bs on times and select a suitable degree and the knots position. Compare this model with the previous ones and comment.
+
+**Solution**
+
+...
+
+```{r GAM, echo=TRUE}
+
+```
+
+...
