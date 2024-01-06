@@ -103,23 +103,36 @@ Refer to $Exercise$ $8.1$. Construct a classification tree, and prune strongly u
 
 Suppose you receive $n=15$ phone calls in a day, and you want to build a model to assess their average length. Your likelihood for each call length is $y_i∼Exponential(\lambda)$. Now, you have to choose the prior $\pi(\lambda)$. Please, tell which of these priors is adequate to describe the problem, and provide a short motivation for each of them:
 
-$$\pi(\lambda)=Beta(4,2)$$
+- $\pi(\lambda)=Beta(4,2)$
 
-$$\pi(\lambda)=Normal(1,2)$$
+- $\pi(\lambda)=Normal(1,2)$
 
-$$\pi(\lambda)=Gamma(4,2)$$
+- $\pi(\lambda)=Gamma(4,2)$ 
 
 Now, compute your posterior as $\pi(\lambda|y) \space \propto \space L(\lambda;y)\pi(\lambda)$ for the selected prior. If your first choice was correct, you will be able to compute it analytically.
 
 **Solution**
 
-...
 
-```{r LAB, echo=TRUE}
+The choice of prior distribution depends on the nature of the problem and the parameter we're estimating, in this case the rate parameter $\lambda$ of an exponential distribution.
+Let's look at all the options and see which one suits our needs better:
 
-```
+- $\beta(4,2)$: The beta distribution is defined on the interval $[0,1]$, so it's not suitable as a prior for $\lambda$, which can take any positive value.
 
-...
+- $N(1,2)$: The normal distribution is defined on the entire real line, so it allows negative values of $\lambda$, which doesn't make sense in this context.
+
+- $\gamma(4,2)$: The gamma distribution is defined on the positive real line, making it a suitable choice for a rate parameter $\lambda$. It's often used as a prior for the rate parameter of an exponential distribution because it's conjugate to the exponential likelihood, meaning that the posterior distribution is also a Gamma distribution.
+
+In fact, given the exponential likelihood and a gamma prior, the posterior distribution can be calculated analytically. If $y_1,...,y_n$ are the call lengths and $λ \sim \gamma(a,b)$, then the posterior distribution of $\lambda$ is given by
+
+$$
+\begin{split}
+  \pi(\lambda|y) \space &\propto \space L(\lambda;y)\pi(\lambda;\alpha,\beta)\\
+  &\propto (\lambda^ne^{-\lambda n \bar y}) \times (\lambda^{\alpha-1}e^{-\beta\lambda})\\
+  &=\lambda^{n+\alpha-1}e^{-\lambda(n\bar y+\beta)}
+\end{split}
+$$
+As we can see, the posterior distribution is recognised as a gamma distribution with parameters $\gamma(\alpha+n,\beta+n\bar y)$, where $\bar y$ is the mean of the call length $y_i$.
 
 
 
@@ -146,24 +159,130 @@ Now, compute your posterior as $\pi(\lambda|y) \space \propto \space L(\lambda;y
 
 This question is about using $gam$ for univariate smoothing, the advantages of penalized regression and weighting a smooth model fit. The $mcycle$ data in the $MASS$ package are a classic dataset in univariate smoothing, introduced in Silverman (1985). The data measure the acceleration of the rider’s head, against time, in a simulated motorcycle crash.
 
-Plot the acceleration against time, and use $gam$ to fit a univariate smooth to the data, selecting the smoothing parameter by GCV (k of 30 to 40 is plenty for this example). Plot the resulting smooth, with partial residuals, but without standard errors.
+1. Plot the acceleration against time, and use $gam$ to fit a univariate smooth to the data, selecting the smoothing parameter by GCV (k of 30 to 40 is plenty for this example). Plot the resulting smooth, with partial residuals, but without standard errors.
 
-Use $lm$ and $poly$ to fit a polynomial to the data, with approximately the same degrees of freedom as was estimated by $gam$. Use $termplot$ to plot the estimated polynomial and partial residuals. Note the substantially worse fit achieved by the polynomial, relative to the penalized regression spline fit.
+2. Use $lm$ and $poly$ to fit a polynomial to the data, with approximately the same degrees of freedom as was estimated by $gam$. Use $termplot$ to plot the estimated polynomial and partial residuals. Note the substantially worse fit achieved by the polynomial, relative to the penalized regression spline fit.
 
-It’s possible to overstate the importance of penalization in explaining the improvement of the penalized regression spline, relative to the polynomial. Use $gam$ to refit an un-penalized thin plate regression spline to the data, with basis dimension the same as that used for the polynomial, and again produce a plot for comparison with the previous two results.
+3. It’s possible to overstate the importance of penalization in explaining the improvement of the penalized regression spline, relative to the polynomial. Use $gam$ to refit an un-penalized thin plate regression spline to the data, with basis dimension the same as that used for the polynomial, and again produce a plot for comparison with the previous two results.
 
-Redo $part$ $3$ using an un-penalized cubic regression spline. You should find a fairly clear ordering of the acceptability of the results for the four models tried - what is it?
+4. Redo part 3 using an un-penalized cubic regression spline. You should find a fairly clear ordering of the acceptability of the results for the four models tried - what is it?
 
-Now plot the model residuals against time, and comment.
+5. Now plot the model residuals against time, and comment.
 
-Fit a linear model including a b-spline using the function bs on times and select a suitable degree and the knots position. Compare this model with the previous ones and comment.
+6. Fit a linear model including a b-spline using the function bs on times and select a suitable degree and the knots position. Compare this model with the previous ones and comment.
 
 **Solution**
 
-...
+1. 
 
-```{r GAM, echo=TRUE}
-
+```{r GAM.0, include=FALSE}
+# Load the packages
+library(MASS)
+library(mgcv)
+library(splines)
 ```
 
-...
+First of all, let's take a look to our dataset
+```{r GAM.1.1, echo=TRUE}
+
+# Load the mcycle data
+data(mcycle)
+
+# Plot the data
+plot(mcycle$times, mcycle$accel, xlab = "Time (ms)", ylab = "Acceleration (g)",
+     main = "Acceleration vs Time in a Simulated Motorcycle Accident")
+```
+
+
+```{r GAM.1.2, echo=TRUE}
+# Fit the model
+fit_gam <- gam(accel ~ s(times, k = 35), data = mcycle, method = "GCV.Cp")
+
+# Print the summary of the model
+summary(fit_gam)
+
+# Plot the smooth
+plot(fit_gam, residuals = TRUE, se = FALSE)
+```
+
+2. 
+
+Taking a look to the summary from the previous point we can see that edf (estimated degrees of freedom) of the model was around 11, so we'll use it here
+
+```{r GAM.2.1, echo=TRUE}
+# Fit a polynomial to the data
+fit_poly <- lm(accel ~ poly(times, degree =11, raw = TRUE), data = mcycle)
+
+# Print the summary of the model
+summary(fit_poly)
+
+# Plot the estimated polynomial and partial residuals
+termplot(fit_poly, partial.resid = TRUE, se = TRUE)
+```
+
+3. 
+
+```{r GAM.3.1, echo=TRUE}
+# Fit the model
+fit_unpenalized <- gam(accel ~ s(times, k = 11, bs = "tp"), data = mcycle)
+
+# Print the summary of the model
+summary(fit_unpenalized)
+
+# Plot the estimated spline
+plot(fit_unpenalized, residuals = TRUE, se = FALSE)
+```
+
+4.
+```{r GAM.4.1, echo=TRUE}
+# Fit the model
+fit_cubic <- gam(accel ~ s(times, k = 11, bs = "cr"), data = mcycle)
+
+# Print the summary of the model
+summary(fit_cubic)
+
+# Plot the estimated spline
+plot(fit_cubic, residuals = TRUE, se = FALSE)
+```
+
+5.
+
+```{r GAM.5.1, echo=TRUE}
+par(mfrow=c(2,2))  # 2 rows, 2 columns
+
+# For the gam model
+plot(mcycle$times, residuals(fit_gam), xlab = "Time (ms)", ylab = "Residuals",
+     main = "Residuals vs Time for the GAM Model")
+
+# For the polynomial model
+plot(mcycle$times, residuals(fit_poly), xlab = "Time (ms)", ylab = "Residuals",
+     main = "Residuals vs Time for the Polynomial Model")
+
+# For the unpenalized thin plate regression spline model
+plot(mcycle$times, residuals(fit_unpenalized), xlab = "Time (ms)", ylab = "Residuals",
+     main = "Residuals vs Time for the Unpenalized Thin Plate Regression Spline Model")
+
+# For the unpenalized cubic regression spline model
+plot(mcycle$times, residuals(fit_cubic), xlab = "Time (ms)", ylab = "Residuals",
+     main = "Residuals vs Time for the Unpenalized Cubic Regression Spline Model")
+```
+
+6.
+
+```{r GAM.6.1, echo=TRUE}
+par(mfrow=c(1,1)) 
+
+# Fit a linear model with a B-spline basis
+fit_bs <- lm(accel ~ bs(times, degree = 1, knots = c(13.5,21,32,40)), data = mcycle)
+
+# Print the summary of the model
+summary(fit_bs)
+
+# Plot the estimated polynomial and partial residuals
+termplot(fit_bs, partial.resid = TRUE, se = TRUE)
+
+# Plot the residuals
+plot(mcycle$times, residuals(fit_bs), xlab = "Time (ms)", ylab = "Residuals",
+     main = "Residuals vs Time for the B-Spline Model")
+```
+
