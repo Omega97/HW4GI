@@ -196,9 +196,38 @@ Refer to $Exercise$ $8.1$. Construct a classification tree, and prune strongly u
 ...
 
 ```{r 8_4, echo=TRUE}
+# Install and load the 'rpart' and 'rpart.plot' packages
+install.packages(c("rpart", "rpart.plot"), repos = Crabs)
+library(rpart)
+library(rpart.plot)
 
+# Read the data
+Crabs <- read.table("http://stat4ds.rwth-aachen.de/data/Crabs.dat", header=TRUE)
+
+# Fit a classification tree
+fit.tree <- rpart(y ~ weight + width + color + spine, data = Crabs)
+
+# Prune the tree based on the cparamet
+cp <- fit.tree$cptable[which.min(fit.tree$cptable[, "xerror"]), "CP"]
+pruned_tree <- prune(fit.tree, cp = cp)
+
+# Plot the pruned tree
+prp(pruned_tree, extra = 1, type = 2, fallen.leaves = TRUE, main = "Pruned Classification Tree")
+
+# Predict the response for each observation
+predicted_satellites <- predict(pruned_tree, newdata = Crabs)
+
+# Display the predictions for each crab
+predicted_classes <- as.numeric(predicted_satellites)
+
+predicted_classes
 ```
+Comment 
 
+# The pruned classification tree, obtained by aggressively pruning until a single explanatory variable is used, provides a simplified model for predicting the presence of satellites in female horseshoe crabs. The predictions represent the classification of each observation into the binary response variable (1 for having satellites, 0 for not having). Further analysis and interpretation of the pruned tree and predictions can guide understanding of the most influential variable in the simplified model.
+The variable predicted_satellites will contain the predicted response for each crab. A value of 1 indicates that the crab is predicted to have satellites, while a value of 0 indicates no satellites.
+Pruning the tree strongly until it uses a single explanatory variable may result in a very simple tree, possibly just a single split based on one variable.
+As we can see our tree is simplier from the one of the 8.2, our tree has just one split which is the first that predicts that all horseshoe crabs of width ≥ 26 cm don't have satellites.
 ...
 
 
@@ -252,9 +281,113 @@ As we can see, the posterior distribution is recognised as a gamma distribution 
 ...
 
 ```{r 7_9, echo=TRUE}
+# Load the necessary library and data
+library(MASS)
+data(Boston)
 
+# Subset the data
+bos_subset <- Boston[, c("dis", "nox")]
+
+# Fit a cubic polynomial regression
+poly_fit <- lm(nox ~ poly(dis, 3), data = bos_subset)
+
+# Display regression output
+summary(poly_fit)
+
+# Plot the data and polynomial fit
+plot(bos_subset$dis, bos_subset$nox, col = "blue", pch = 20, main = "Cubic Polynomial Regression", xlab = "dis", ylab = "nox")
+lines(sort(bos_subset$dis), fitted(poly_fit)[order(bos_subset$dis)], col = "red", lwd = 2)
+# Function to fit polynomial and return residual sum of squares
+fit_poly_and_return_rss <- function(degree) {
+  poly_fit <- lm(nox ~ poly(dis, degree), data = bos_subset)
+  rss <- sum(residuals(poly_fit)^2)
+  return(rss)
+}
+
+# Plot polynomial fits for degrees 1 to 10
+degrees <- 1:10
+rss_values <- sapply(degrees, fit_poly_and_return_rss)
+
+plot(degrees, rss_values, type = "b", main = "Residual Sum of Squares for Polynomial Fits",
+     xlab = "Polynomial Degree", ylab = "Residual Sum of Squares")
+
+# Load necessary libraries
+library(MASS)
+library(boot)
+
+# Subset the data
+bos_subset <- Boston[, c("dis", "nox")]
+
+# Function to fit polynomial and return cross-validation error
+fit_poly_and_return_cv_error <- function(degree) {
+  poly_fit <- lm(nox ~ poly(dis, degree), data = bos_subset)
+  cv_fit <- cv.glm(bos_subset, poly_fit)
+  return(cv_fit$delta[1])
+}
+
+# Perform cross-validation to select optimal degree
+degrees <- 1:10
+cv_errors <- sapply(degrees, fit_poly_and_return_cv_error)
+
+# Find the degree with the minimum cross-validation error
+optimal_degree <- which.min(cv_errors)
+
+# Display optimal degree
+cat("Optimal Degree:", optimal_degree, "\n")
+
+# Fit regression spline with 4 degrees of freedom
+library(splines)
+spline_fit <- lm(nox ~ bs(dis, df = 4), data = bos_subset)
+
+# Display output
+summary(spline_fit)
+
+# Plot the data and spline fit
+plot(bos_subset$dis, bos_subset$nox, col = "blue", pch = 20, main = "Regression Spline (4 df)", xlab = "dis", ylab = "nox")
+lines(sort(bos_subset$dis), fitted(spline_fit)[order(bos_subset$dis)], col = "red", lwd = 2)
+# Function to fit spline and return residual sum of squares
+fit_spline_and_return_rss <- function(df) {
+  spline_fit <- lm(nox ~ bs(dis, df = df), data = bos_subset)
+  rss <- sum(residuals(spline_fit)^2)
+  return(rss)
+}
+
+# Plot spline fits for degrees of freedom from 1 to 10
+df_values <- 1:10
+rss_spline_values <- sapply(df_values, fit_spline_and_return_rss)
+
+plot(df_values, rss_spline_values, type = "b", main = "Residual Sum of Squares for Spline Fits",
+     xlab = "Degrees of Freedom", ylab = "Residual Sum of Squares")
+
+# Perform cross-validation to select the best degrees of freedom
+cv_errors_spline <- sapply(df_values, function(df) {
+  cv_fit_spline <- cv.lm(bos_subset, lm(nox ~ bs(dis, df = df)))
+  return(cv_fit_spline$delta[1])
+})
+
+# Find the degrees of freedom with the minimum cross-validation error
+optimal_df <- which.min(cv_errors_spline)
+
+# Display optimal degrees of freedom
+cat("Optimal Degrees of Freedom:", optimal_df, "\n")
 ```
+a) Fit a Cubic Polynomial Regression:
+Results: Understand the relationship between distances to employment centers (dis) and nitrogen oxide concentration (nox). The fitted cubic polynomial model showcases any non-linear patterns.
 
+(b) Plot Polynomial Fits for Different Degrees:
+Results: Explore how the model fit changes with different polynomial degrees. The curve illustrates the trade-off between model complexity and goodness of fit.
+
+(c) Perform Cross-Validation for Polynomial Degree Selection:
+Results: Identify the optimal polynomial degree that balances model complexity and generalization performance using cross-validation.
+
+(d) Use the bs() Function to Fit a Regression Spline:
+Results: Capture non-linear relationships with a spline. The spline curve visually represents how the model adapts to the complexities in the data.
+
+(e) Fit a Regression Spline for a Range of Degrees of Freedom:
+Results: Observe how spline flexibility affects model fit. The curve shows the trade-off between fitting closely to the data and avoiding overfitting.
+
+(f) Perform Cross-Validation for Spline Degree Selection:
+Results: Choose the optimal degrees of freedom for the spline model using cross-validation. Ensures a balance between flexibility and generalization.
 ...
 
 
