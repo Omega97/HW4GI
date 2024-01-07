@@ -26,7 +26,7 @@ Consider $n$ independent observations from a $N(\mu, \sigma^2)$ distribution.
 
 (b) Considering $\sigma^2$ to be known, find the information using (i) equation (4.3), (ii) equation (4.4). Use them to show that the large-sample variance of $\hat \mu$ is $\sigma^2/n$. Explain why $\hat \mu$ is the minimum variance unbiased estimator.
 
-(c) Show that the ML estimator $\hat \sigma$ of $\sigma$ is $\sqrt{\frac{1}{n}\Sigma_i(Y_i - Y)^2}$. Show that the large-sample variance of $\hat \sigma$ is $\sigma^2/2n$.
+(c) Show that the ML estimator $\hat \sigma$ of $\sigma$ is $\sqrt{\frac{1}{n}\Sigma_i(Y_i - \bar Y)^2}$. Show that the large-sample variance of $\hat \sigma$ is $\sigma^2/2n$.
 
 **Solution**
 
@@ -34,7 +34,7 @@ Consider $n$ independent observations from a $N(\mu, \sigma^2)$ distribution.
 
 First, we write down the likelihood function;
 $$L(\mu, \sigma^2|y) = \prod_{i=1}^n \frac{1}{\sqrt{2 \pi \sigma^2}} exp \left(-\frac{(y_i-\mu)^2}{2 \sigma^2}\right)$$
-Then, we use the likelihood to obtain the log-likelihood;
+Then we use the likelihood to obtain the log-likelihood;
 $$l(\mu, \sigma^2|y) = \sum_{i=1}^n log \left(\frac{1}{\sqrt{2 \pi \sigma^2}} exp \left(-\frac{(y_i-\mu)^2}{2 \sigma^2} \right) \right)$$
 $$= -\frac{1}{2}\sum_{i=1}^n \left(log(2 \pi \sigma^2) +  \frac{(y_i-\mu)^2}{ \sigma^2} \right)$$
 
@@ -43,36 +43,66 @@ We can see that the log-likelihood function is a parabolic function of $\mu$.
 
 We now proceed by calculating the derivatives;
 
-$$\frac{dl}{d\mu} = \frac{1}{\sigma^2} \Sigma_{i=1}^n (y_i-\mu)
-= n \frac{\bar y -\mu}{\sigma^2}$$
+$$\frac{\partial l(\mu, \sigma|Y)}{\partial\mu} = \frac{1}{\sigma^2} \sum_{i=1}^n (Y_i-\mu)
+= n \frac{\mu - \bar Y}{\sigma^2}$$
 
 By equating the derivative to $0$, we get the ML estimate of the mean 
-$$n \frac{\bar y -\hat \mu}{\sigma^2} = 0$$
-$$\hat \mu = \frac{1}{n}\sum_{i=1}^ny_i = \bar y$$
+$$n \frac{\hat \mu - \bar Y}{\sigma^2} = 0$$
+$$\hat \mu = \frac{1}{n}\sum_{i=1}^n Y_i = \bar y$$
 The ML estimator for the true mean is the sample mean.
 
-$$\left( \frac{d}{d\mu} \right)^2 l =  -\frac{1}{\sigma^2} < 0$$
+$$\left( \frac{\partial}{\partial\mu} \right)^2 l(\mu, \sigma|Y) =  -\frac{n}{\sigma^2} < 0$$
 Therefore, the log-likelihood function is also concave.
 
 
 (b)
 
-$$I(\theta) = n \space E \left(\frac{\partial log(f(Y;\theta))}{\partial \theta} \right)^2$$
+By assuming that we know $\sigma$, and by using the previous point, we can now calculate the Fisher expected information of the ML estimator $\hat \mu$ in two different ways:
 
-$$I(\theta) = - \space E \left(\frac{\partial^2 L(\theta)}{\partial \theta^2} \right)$$
+$$
+I(\mu|Y) 
+= - \space E \left(\frac{\partial^2 l(\mu|Y)}{\partial \mu^2} \right)
+= -E(-\frac{n}{\sigma^2}) 
+= \frac{n}{\sigma^2}
+$$
+Similarly:
+
+$$I(\mu|Y) = n \space E \left(\frac{\partial l(\mu|Y)}{\partial \mu} \right)^2$$
+Since this estimator reaches the Cramér–Rao lower bound, it is considered a minimum variance estimator. 
 
 
 (c)
 
-We derive the log-likelihood from before with respect to the variance;
+We derive the log-likelihood from before in respect to the variance;
 $$\frac{dl}{d(\sigma^2)} = -\frac{1}{2} \left( \frac{n}{\sigma^2} - \frac{1}{ \sigma^4} \Sigma_{i=1}^n (y_i-\mu)^2 \right) $$
 
-By equating the derivative to 0, we get the ML estimator of the variance;
+By equating the derivative to 0 we get the ML estimator of the variance;
 $$-\frac{1}{2} \left(\frac{n}{\hat \sigma^2} - \frac{1}{\hat \sigma^4} \sum_{i=1}^n (y_i-\mu)^2 \right) = 0$$
-$$\hat \sigma^2 = \frac{1}{n}\sum_{i=1}^n (y_i-\bar y)^2 = s^2$$
-The ML estimator for the true standard deviation is the sample standard deviation. 
+$$\hat \sigma^2 = \frac{1}{n}\sum_{i=1}^n (y_i-\bar y)^2$$
+The ML estimator for the true standard deviation is the standard deviation of the sample. 
 
-...
+We can show that the large-sample variance of $\hat \sigma$ is $\sigma^2/2n$ with an example:
+
+```{r 4_42_a}
+sample_size <- 50
+n_samples <- 1000
+
+data <- c()
+for (i in 1:n_samples){
+  sample <- rnorm(sample_size)
+  data[length(data)+1] <- sd(sample)
+}
+```
+
+expected variance
+```{r 4_42_b}
+1/(2 * sample_size)
+```
+
+actual variance
+```{r 4_42_c}
+var(data) 
+```
 
 
 
@@ -115,7 +145,7 @@ mean(v_boot)
 sd(v_boot)
 ```
 
-As we can see since the sample used for the bootstrap was obtained by sampling the true distribution, both the center and the spread of the bootstrap distribution closely resemble those of the true sampling distribution of $\hat \theta$. 
+As we can see, since the sample used for the bootstrap was obtained by sampling the true distribution, both the center and the spread of the bootstrap distribution closely resemble those of the true sampling distribution of $\hat \theta$. 
 
 This, however, is not true in general, as we can see in the following example.
 
@@ -150,8 +180,7 @@ mean(v_boot)
 sd(v_boot)
 ```
 
-In this example, the metric in question is the maximum value. Since this metric is so sensitive to the variety of values in the sample, the bootstrap method fails to capture the true spread and especially the shape of the distribution.
-
+In this example, the metric in question is the maximum value. Since this metric is so sensitive to the variety of values across the samples, the bootstrap method fails to capture the true spread and especially the shape of the distribution.
 
 
 
