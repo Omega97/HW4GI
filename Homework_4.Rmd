@@ -197,7 +197,7 @@ Refer to $Exercise$ $8.1$. Construct a classification tree, and prune strongly u
 
 ```{r 8_4, echo=TRUE}
 # Install and load the 'rpart' and 'rpart.plot' packages
-install.packages(c("rpart", "rpart.plot"), repos = Crabs)
+install.packages(c("rpart", "rpart.plot"), repos = "http://cran.us.r-project.org")
 library(rpart)
 library(rpart.plot)
 
@@ -224,7 +224,7 @@ predicted_classes
 ```
 Comment 
 
-# The pruned classification tree, obtained by aggressively pruning until a single explanatory variable is used, provides a simplified model for predicting the presence of satellites in female horseshoe crabs. The predictions represent the classification of each observation into the binary response variable (1 for having satellites, 0 for not having). Further analysis and interpretation of the pruned tree and predictions can guide understanding of the most influential variable in the simplified model.
+The pruned classification tree, obtained by aggressively pruning until a single explanatory variable is used, provides a simplified model for predicting the presence of satellites in female horseshoe crabs. The predictions represent the classification of each observation into the binary response variable (1 for having satellites, 0 for not having). Further analysis and interpretation of the pruned tree and predictions can guide understanding of the most influential variable in the simplified model.
 The variable predicted_satellites will contain the predicted response for each crab. A value of 1 indicates that the crab is predicted to have satellites, while a value of 0 indicates no satellites.
 Pruning the tree strongly until it uses a single explanatory variable may result in a very simple tree, possibly just a single split based on one variable.
 As we can see our tree is simplier from the one of the 8.2, our tree has just one split which is the first that predicts that all horseshoe crabs of width ≥ 26 cm don't have satellites.
@@ -274,11 +274,10 @@ As we can see, the posterior distribution is recognised as a gamma distribution 
 
 ### exercises 7.9
 
-...
+
 
 **Solution**
 
-...
 
 ```{r 7_9, echo=TRUE}
 # Load the necessary library and data
@@ -360,17 +359,19 @@ plot(df_values, rss_spline_values, type = "b", main = "Residual Sum of Squares f
      xlab = "Degrees of Freedom", ylab = "Residual Sum of Squares")
 
 # Perform cross-validation to select the best degrees of freedom
-cv_errors_spline <- sapply(df_values, function(df) {
-  cv_fit_spline <- cv.lm(bos_subset, lm(nox ~ bs(dis, df = df)))
-  return(cv_fit_spline$delta[1])
-})
+#cv_errors_spline <- sapply(df_values, function(df) {
+#  spline_fit <- lm(get("nox") ~ bs(dis, df = df), data = bos_subset)
+#  cv_fit_spline <- cv.glm(bos_subset, spline_fit)  # Use cv.glm() instead of cv.lm()
+#  return(cv_fit_spline$delta[1])
+#})
 
 # Find the degrees of freedom with the minimum cross-validation error
-optimal_df <- which.min(cv_errors_spline)
+#optimal_df <- which.min(cv_errors_spline)
 
 # Display optimal degrees of freedom
-cat("Optimal Degrees of Freedom:", optimal_df, "\n")
+#cat("Optimal Degrees of Freedom:", optimal_df, "\n")
 ```
+
 a) Fit a Cubic Polynomial Regression:
 Results: Understand the relationship between distances to employment centers (dis) and nitrogen oxide concentration (nox). The fitted cubic polynomial model showcases any non-linear patterns.
 
@@ -410,7 +411,7 @@ This question is about using $gam$ for univariate smoothing, the advantages of p
 
 **Solution**
 
-1. 
+1. First of all, let's take a look to our dataset
 
 ```{r GAM.0, include=FALSE}
 # Load the packages
@@ -419,7 +420,6 @@ library(mgcv)
 library(splines)
 ```
 
-First of all, let's take a look to our dataset
 ```{r GAM.1.1, echo=TRUE}
 
 # Load the mcycle data
@@ -429,7 +429,7 @@ data(mcycle)
 plot(mcycle$times, mcycle$accel, xlab = "Time (ms)", ylab = "Acceleration (g)",
      main = "Acceleration vs Time in a Simulated Motorcycle Accident")
 ```
-
+And now we can create the require GAM model and see how it fit our data:
 
 ```{r GAM.1.2, echo=TRUE}
 # Fit the model
@@ -442,9 +442,7 @@ summary(fit_gam)
 plot(fit_gam, residuals = TRUE, se = FALSE)
 ```
 
-2. 
-
-Taking a look to the summary from the previous point we can see that edf (estimated degrees of freedom) of the model was around 11, so we'll use it here
+2. Taking a look to the summary from the previous point we can see that edf (estimated degrees of freedom) of the model was around 11, so we'll use it here
 
 ```{r GAM.2.1, echo=TRUE}
 # Fit a polynomial to the data
@@ -457,11 +455,11 @@ summary(fit_poly)
 termplot(fit_poly, partial.resid = TRUE, se = TRUE)
 ```
 
-3. 
+3. Here's how I did it:
 
 ```{r GAM.3.1, echo=TRUE}
 # Fit the model
-fit_unpenalized <- gam(accel ~ s(times, k = 11, bs = "tp"), data = mcycle)
+fit_unpenalized <- gam(accel ~ s(times, bs = "tp"), data = mcycle)
 
 # Print the summary of the model
 summary(fit_unpenalized)
@@ -471,9 +469,10 @@ plot(fit_unpenalized, residuals = TRUE, se = FALSE)
 ```
 
 4.
+
 ```{r GAM.4.1, echo=TRUE}
 # Fit the model
-fit_cubic <- gam(accel ~ s(times, k = 11, bs = "cr"), data = mcycle)
+fit_cubic <- gam(accel ~ s(times, bs = "cr"), data = mcycle)
 
 # Print the summary of the model
 summary(fit_cubic)
@@ -481,8 +480,9 @@ summary(fit_cubic)
 # Plot the estimated spline
 plot(fit_cubic, residuals = TRUE, se = FALSE)
 ```
+Looking at all four fits, you can see that the fit function is becoming smoother and better suited to our data set.
 
-5.
+5. Looking at a quick comparison between these four, we can see that the first model has a better distribution around 0 in the first part, better than the last two, but in general they don't seem to have any particular trend.
 
 ```{r GAM.5.1, echo=TRUE}
 par(mfrow=c(2,2))  # 2 rows, 2 columns
@@ -504,7 +504,8 @@ plot(mcycle$times, residuals(fit_cubic), xlab = "Time (ms)", ylab = "Residuals",
      main = "Residuals vs Time for the Unpenalized Cubic Regression Spline Model")
 ```
 
-6.
+
+6. Honestly, I wanted to try to fit it using a B-splines as basis functions with only one degree in 4 different knots, chosen by me, looking at the plot at the beginning and taking into consideration how the results changes in better.
 
 ```{r GAM.6.1, echo=TRUE}
 par(mfrow=c(1,1)) 
@@ -522,4 +523,14 @@ termplot(fit_bs, partial.resid = TRUE, se = TRUE)
 plot(mcycle$times, residuals(fit_bs), xlab = "Time (ms)", ylab = "Residuals",
      main = "Residuals vs Time for the B-Spline Model")
 ```
+I wanted to compare all the five models calculating the Akaike Information Criterion (AIC) and, as you can see:
+```{r GAM.6.2, echo=TRUE}
+print(AIC(fit_gam))
+print(AIC(fit_poly))
+print(AIC(fit_unpenalized))
+print(AIC(fit_cubic))
+print(AIC(fit_bs))
+```
+Looking at the value, except for the one where I used the polynomial, the model I created has a value very close to the minimum two given by the one with the unpenalised thin-plate regression spline model and the unpenalised cubic regression spline model.
+So this model, especially because it is the one with fewer degrees of freedom, can also be considered a good one.
 
